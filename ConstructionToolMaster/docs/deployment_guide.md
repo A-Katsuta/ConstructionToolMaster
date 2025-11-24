@@ -30,9 +30,21 @@
 1.  [Vercel](https://vercel.com/)にアクセスし、GitHubアカウントでサインアップ/ログイン。
 2.  「New Project」をクリック。
 3.  先ほど作成したGitHubリポジトリを選択。
-4.  **Framework Preset** が「Vite」になっていることを確認。
-5.  「Deploy」ボタンをクリック。
-6.  数分でデプロイが完了し、URLが発行されます（例: `https://your-project.vercel.app`）。
+4.  **重要:** 「Root Directory」を `ConstructionToolMaster` に変更。
+5.  **Framework Preset** が「Vite」になっていることを確認。
+6.  「Deploy」ボタンをクリック。
+7.  数分でデプロイが完了し、URLが発行されます（例: `https://your-project.vercel.app`）。
+
+### ⚠️ トラブルシューティング: Build Error が出る場合
+もし "vite: command not found" エラーが出た場合：
+
+1.  Vercelのプロジェクト設定（Settings）を開く。
+2.  「General」タブの「Root Directory」を **`ConstructionToolMaster`** に設定。
+3.  「Build & Development Settings」で：
+    - Build Command: `npm run build`
+    - Output Directory: `dist`
+    - Install Command: `npm install`
+4.  設定を保存して、「Deployments」タブから「Redeploy」をクリック。
 
 ### ステップ3: iPhoneでアクセス
 1.  発行されたURLをiPhoneのSafariで開く。
@@ -71,7 +83,10 @@ npm run build
 
 ---
 
-## トラブルシューティング
+## よくあるエラーと対処法
+
+### Q. "vite: command not found" エラーが出る
+**A.** Vercelの「Root Directory」設定が間違っている可能性があります。プロジェクト設定で `ConstructionToolMaster` を指定してください。
 
 ### Q. 「ホーム画面に追加」のオプションが出ない
 **A.** HTTPSでアクセスしているか確認してください。VercelやNetlifyは自動的にHTTPSになります。

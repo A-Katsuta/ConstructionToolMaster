@@ -1,6 +1,6 @@
 {
-    "buildCommand": "npm install && npm run build",
-    "outputDirectory": "dist",
-    "installCommand": "npm install",
+    "buildCommand": "cd ConstructionToolMaster && npm run build",
+    "outputDirectory": "ConstructionToolMaster/dist",
+    "installCommand": "cd ConstructionToolMaster && npm install",
     "framework": "vite"
 }
