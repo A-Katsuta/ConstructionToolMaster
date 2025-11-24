@@ -5,38 +5,46 @@ import { tools } from '../data/tools';
 const QUESTIONS_PER_ROUND = 5;
 const TIME_LIMIT = 60; // 60 seconds for Score Attack
 
+const createInitialState = (): GameState => ({
+    currentQuestionIndex: 0,
+    score: 0,
+    correctCount: 0,
+    timeLeft: TIME_LIMIT,
+    isGameOver: false,
+    isPlaying: false,
+    mode: null,
+    history: [],
+});
+
 export const useGame = () => {
-    const [gameState, setGameState] = useState<GameState>({
-        currentQuestionIndex: 0,
-        score: 0,
-        correctCount: 0,
-        timeLeft: TIME_LIMIT,
-        isGameOver: false,
-        isPlaying: false,
-        mode: null,
-        history: [],
-    });
+    const [gameState, setGameState] = useState<GameState>(createInitialState());
 
     const [shuffledTools, setShuffledTools] = useState<Tool[]>([]);
 
     const startGame = useCallback((mode: 'learning' | 'score_attack') => {
+        const availableCount = Math.min(QUESTIONS_PER_ROUND, tools.length);
+        if (availableCount === 0) {
+            console.warn('No tool data available to start the game.');
+            return;
+        }
+
         // Shuffle tools
-        const shuffled = [...tools].sort(() => Math.random() - 0.5).slice(0, QUESTIONS_PER_ROUND);
+        const shuffled = [...tools].sort(() => Math.random() - 0.5).slice(0, availableCount);
         setShuffledTools(shuffled);
 
         setGameState({
-            currentQuestionIndex: 0,
-            score: 0,
-            correctCount: 0,
-            timeLeft: TIME_LIMIT,
-            isGameOver: false,
+            ...createInitialState(),
             isPlaying: true,
             mode,
-            history: [],
         });
     }, []);
 
     const answerQuestion = useCallback((isCorrect: boolean, userAnswer?: string) => {
+        if (shuffledTools.length === 0) {
+            console.warn('No questions available to answer.');
+            return;
+        }
+
         setGameState(prev => {
             const newScore = isCorrect ? prev.score + (prev.mode === 'score_attack' ? 100 : 10) : prev.score;
             const newHistory: GameHistory = {
@@ -68,6 +76,11 @@ export const useGame = () => {
         });
     }, [shuffledTools]);
 
+    const resetGame = useCallback(() => {
+        setShuffledTools([]);
+        setGameState(createInitialState());
+    }, []);
+
     useEffect(() => {
         let timer: number;
         if (gameState.isPlaying && gameState.mode === 'score_attack' && gameState.timeLeft > 0) {
@@ -90,6 +103,7 @@ export const useGame = () => {
         currentTool,
         startGame,
         answerQuestion,
+        resetGame,
         totalQuestions: shuffledTools.length,
     };
 };

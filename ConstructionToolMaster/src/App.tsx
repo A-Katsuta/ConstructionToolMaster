@@ -4,7 +4,7 @@ import { GameScreen } from './pages/GameScreen';
 import { ResultScreen } from './pages/ResultScreen';
 
 function App() {
-  const { gameState, currentTool, startGame, answerQuestion, totalQuestions } = useGame();
+  const { gameState, currentTool, startGame, answerQuestion, resetGame, totalQuestions } = useGame();
 
   // Render Title Screen
   if (!gameState.isPlaying && !gameState.isGameOver) {
@@ -17,7 +17,7 @@ function App() {
       <ResultScreen
         score={gameState.score}
         history={gameState.history}
-        onRetry={() => window.location.reload()} // Simple reload to reset for now
+        onRetry={resetGame}
       />
     );
   }
