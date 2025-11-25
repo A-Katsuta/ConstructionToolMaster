@@ -1,7 +1,7 @@
 import type { Tool } from '../types';
-import futureToolSheet from '../../future_versions/工具名称一覧.md?raw';
+import futureToolSheet from '../../future_versions/tools_sheet.md?raw';
 
-// 未来版フォトをまとめて取り込む（未存在なら空オブジェクト）
+// future_versions/tools_photos 内の画像ファイルを一括 import（No.xx_名称.png 形式を想定）
 const photoModules = import.meta.glob('../../future_versions/tools_photos/*.{png,jpg,jpeg,webp}', {
     eager: true,
     import: 'default',
@@ -15,14 +15,15 @@ const photoMap: Record<string, string> = Object.entries(photoModules).reduce((ac
 }, {} as Record<string, string>);
 
 const placeholderImage =
-    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" fill="none"><rect width="600" height="400" rx="24" fill=\"%23222\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%23ccc\" font-size=\"28\" font-family=\"sans-serif\">Tool</text></svg>';
+    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" fill="none"><rect width="600" height="400" rx="24" fill="%23222"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23ccc" font-size="28" font-family="sans-serif">Tool</text></svg>';
 
+// いま写真が用意されている5種だけを手入力（名称・説明を正しい日本語に修正）
 const baseTools: Tool[] = [
     {
         id: '1',
-        formalName: 'インパクトドライバ',
-        colloquialNames: ['インパクト', 'ガチャ'],
-        description: 'ネジ締めや穴あけに使用する電動工具。回転と打撃を組み合わせて強力に締め付ける。',
+        formalName: 'インパクトドライバー',
+        colloquialNames: ['インパクト', 'ドライバー'],
+        description: 'ネジやボルトを強い回転と打撃で締め込む電動工具。先端ビットを付け替えて使う。',
         imageUrl: '/images/impact-driver.png',
         category: 'power',
         difficulty: 1,
@@ -31,16 +32,16 @@ const baseTools: Tool[] = [
         id: '2',
         formalName: 'モンキーレンチ',
         colloquialNames: ['モンキー'],
-        description: 'ボルトやナットを締めたり緩めたりする工具。口の開き幅を調節できる。',
+        description: '口幅をネジで調整できるスパナ。ボルト・ナットをつかんで回す。',
         imageUrl: '/images/monkey-wrench.png',
         category: 'hand',
         difficulty: 1,
     },
     {
         id: '3',
-        formalName: 'ディスクグラインダ',
-        colloquialNames: ['サンダー', 'グラインダ'],
-        description: '金属や石材の研磨、切断に使用する電動工具。円盤状の砥石を回転させる。',
+        formalName: 'ディスクグラインダー',
+        colloquialNames: ['サンダー', 'グラインダー'],
+        description: '砥石や切断砥石を高速回転させて研削・切断する電動工具。火花に注意。',
         imageUrl: '/images/disc-grinder.png',
         category: 'power',
         difficulty: 2,
@@ -49,16 +50,16 @@ const baseTools: Tool[] = [
         id: '4',
         formalName: 'コンベックス',
         colloquialNames: ['スケール', 'メジャー'],
-        description: '長さを測るための測定工具。金属製のテープが巻かれている。',
+        description: '引き出した目盛り付きテープで長さを測る巻尺。ロックで固定できる。',
         imageUrl: '/images/measuring-tape.png',
         category: 'measurement',
         difficulty: 1,
     },
     {
         id: '5',
-        formalName: '安全帯',
-        colloquialNames: ['命綱'],
-        description: '高所作業での墜落を防止するための保護具。現在は「墜落制止用器具」が正式名称。',
+        formalName: '安全帯（フルハーネス）',
+        colloquialNames: ['ハーネス'],
+        description: '高所作業で墜落を防ぐ命綱。胴ベルト型より転落時の姿勢保持に優れる。',
         imageUrl: '/images/safety-harness.png',
         category: 'safety',
         difficulty: 2,
@@ -66,9 +67,8 @@ const baseTools: Tool[] = [
 ];
 
 /**
- * future_versions/工具名称一覧.md は Markdown の表形式。
- * | No. | 正式名称 | 俗称 | 工具の簡易説明 | 関係する業界 |
- * これを Tool 配列に変換し、既存 tools に追加する。
+ * future_versions/工具写真一覧.md を Markdown 表としてパースし、Tool 配列に変換する。
+ * | No. | 正式名称 | 通称 | 工具の用途説明 | 分類など |
  */
 const parseFutureTools = (raw: string): Tool[] => {
     const lines = raw
@@ -86,11 +86,11 @@ const parseFutureTools = (raw: string): Tool[] => {
         if (cells.length < 5) return;
 
         const [no, formalNameRaw, colloquial, description] = cells;
-        const formalNameVariants = formalNameRaw.split(/、|,|，/).map(n => n.trim()).filter(Boolean);
+        const formalNameVariants = formalNameRaw.split(/、|,|・/).map(n => n.trim()).filter(Boolean);
         const formalName = formalNameVariants[0] ?? formalNameRaw;
-        const colloquialNames = colloquial.split(/、|,|，/).map(n => n.trim()).filter(Boolean);
+        const colloquialNames = colloquial.split(/、|,|・/).map(n => n.trim()).filter(Boolean);
 
-        // ファイル名と一致するものを優先的に利用（例: No.01_一輪車.jpg）
+        // ファイル名と一致する名称があればその写真を優先利用（例: No.01_〇〇.jpg）
         const matchedPhoto =
             formalNameVariants
                 .map(name => photoMap[name])
@@ -111,9 +111,10 @@ const parseFutureTools = (raw: string): Tool[] => {
     return toolsFromSheet;
 };
 
-// 既存 formalName と重複するものを除外してマージ
+// 既存の名称と重複するものを除外
 const futureTools = parseFutureTools(futureToolSheet).filter(
     future => !baseTools.some(base => base.formalName === future.formalName),
 );
 
-export const tools: Tool[] = [...baseTools, ...futureTools];
+// 写真が揃っていて名称も確認済みのものだけを出題する
+export const tools: Tool[] = [...baseTools];
