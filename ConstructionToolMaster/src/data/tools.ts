@@ -17,7 +17,7 @@ const photoMap: Record<string, string> = Object.entries(photoModules).reduce((ac
 const placeholderImage =
     'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" fill="none"><rect width="600" height="400" rx="24" fill="%23222"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23ccc" font-size="28" font-family="sans-serif">Tool</text></svg>';
 
-// いま写真が用意されている5種だけを手入力（名称・説明を正しい日本語に修正）
+// 既存ゲーム内で使用していた初期データ
 const baseTools: Tool[] = [
     {
         id: '1',
@@ -66,6 +66,8 @@ const baseTools: Tool[] = [
     },
 ];
 
+const normalizeName = (name: string) => name.replace(/[ー－\-‐―]/g, '').trim();
+
 /**
  * future_versions/工具写真一覧.md を Markdown 表としてパースし、Tool 配列に変換する。
  * | No. | 正式名称 | 通称 | 工具の用途説明 | 分類など |
@@ -98,7 +100,7 @@ const parseFutureTools = (raw: string): Tool[] => {
             photoMap[formalName];
 
         toolsFromSheet.push({
-            id: `F${no}`,
+            id: `F${no.padStart(3, '0')}`,
             formalName,
             colloquialNames,
             description,
@@ -111,10 +113,28 @@ const parseFutureTools = (raw: string): Tool[] => {
     return toolsFromSheet;
 };
 
-// 既存の名称と重複するものを除外
-const futureTools = parseFutureTools(futureToolSheet).filter(
-    future => !baseTools.some(base => base.formalName === future.formalName),
-);
+// future_versions の85件をすべて取り込み、名称重複は正規化して除外
+const futureTools = parseFutureTools(futureToolSheet);
+const futureByName = new Map<string, Tool>();
+futureTools.forEach(t => {
+    const key = normalizeName(t.formalName);
+    if (!futureByName.has(key)) {
+        futureByName.set(key, t);
+    }
+});
 
-// 写真が揃っていて名称も確認済みのものだけを出題する
-export const tools: Tool[] = [...baseTools];
+const mergedTools: Tool[] = [];
+
+// 1) future(85件) を優先登録
+futureByName.forEach(t => mergedTools.push(t));
+
+// 2) futureになかった初期データだけ追加（例: 安全帯）
+baseTools.forEach(b => {
+    const key = normalizeName(b.formalName);
+    if (!futureByName.has(key)) {
+        mergedTools.push(b);
+    }
+});
+
+// 写真付き85件+初期分（重複除外）をゲームで利用
+export const tools: Tool[] = mergedTools;
